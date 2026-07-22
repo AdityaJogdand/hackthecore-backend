@@ -1,15 +1,15 @@
 import express from "express";
 import { Event } from "../../models/Event.js";
-import { requireAdmin } from "../../middleware/requireAdmin.js";
+import { requireAdmin } from "./auth.js";
 
 const router = express.Router();
 
 function pickEventFields(body) {
   const allowed = [
-    "eventType","title","banner","thumbnail","venue","city","date","time",
-    "capacity","registrationDeadline","registrationLink","description","venueImages","timeline",
-    "sponsors","contact","edition","themeImage","problemStatement","prizes",
-    "judges","faqs","rsvpRole","featured","stats",
+    "eventType", "title", "banner", "thumbnail", "venue", "city", "date", "time",
+    "capacity", "registrationDeadline", "registrationLink", "description", "venueImages", "timeline",
+    "sponsors", "contact", "edition", "themeImage", "problemStatement", "prizes",
+    "judges", "faqs", "rsvpRole", "featured", "stats",
   ];
   const out = {};
   for (const key of allowed) {
@@ -18,7 +18,7 @@ function pickEventFields(body) {
   return out;
 }
 
-// POST /api/events — create event
+// POST /api/admin/events — create event
 router.post("/", requireAdmin, async (req, res) => {
   try {
     const event = await Event.create(pickEventFields(req.body));
@@ -28,14 +28,10 @@ router.post("/", requireAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/events/:id — update event
+// PUT /api/admin/events/:id — update event
 router.put("/:id", requireAdmin, async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(
-      req.params.id,
-      pickEventFields(req.body),
-      { new: true, runValidators: true }
-    );
+    const event = await Event.findByIdAndUpdate(req.params.id, pickEventFields(req.body), { new: true, runValidators: true });
     if (!event) return res.status(404).json({ message: "Event not found." });
     res.json(event);
   } catch (err) {
@@ -43,7 +39,7 @@ router.put("/:id", requireAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/events/:id/featured — toggle featured
+// PATCH /api/admin/events/:id/featured — toggle featured
 router.patch("/:id/featured", requireAdmin, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -56,7 +52,7 @@ router.patch("/:id/featured", requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/events/:id — delete event
+// DELETE /api/admin/events/:id — delete event
 router.delete("/:id", requireAdmin, async (req, res) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);

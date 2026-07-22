@@ -17,6 +17,7 @@ import adminEventRoutes from "./routes/admin/events.js";
 import adminPartnershipRoutes from "./routes/admin/partnerships.js";
 import adminProjectRoutes from "./routes/admin/projects.js";
 
+
 const app = express();
 
 /* -------------------------------------------------------------------------- */
@@ -36,7 +37,9 @@ app.use(
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   process.env.CLIENT_URL,
+  process.env.ADMIN_URL,
 ].filter(Boolean);
 
 app.use(
@@ -72,9 +75,9 @@ app.use("/api/projects", publicProjectRoutes);
 /* -------------------------------------------------------------------------- */
 
 app.use("/api/admin", adminAuthRoutes);
-app.use("/api/events", adminEventRoutes);
-app.use("/api/partnerships", adminPartnershipRoutes);
-app.use("/api/projects", adminProjectRoutes);
+app.use("/api/admin/events", adminEventRoutes);
+app.use("/api/admin/partnerships", adminPartnershipRoutes);
+app.use("/api/admin/projects", adminProjectRoutes);
 
 /* -------------------------------------------------------------------------- */
 /*                               Health Check                                 */

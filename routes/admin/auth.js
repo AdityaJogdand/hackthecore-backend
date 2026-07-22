@@ -60,4 +60,22 @@ router.get("/verify", verifyLimiter, (req, res) => {
   }
 });
 
+// Middleware to protect admin routes
+export const requireAdmin = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized." });
+  }
+  try {
+    const decoded = jwt.verify(authHeader.split(" ")[1], process.env.JWT_SECRET);
+    if (decoded.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden." });
+    }
+    req.admin = { username: process.env.ADMIN_USERNAME };
+    next();
+  } catch {
+    res.status(401).json({ message: "Token expired or invalid." });
+  }
+};
+
 export default router;

@@ -1,21 +1,23 @@
 import express from "express";
+import { requireAdmin } from "./auth.js";
 import Project from "../../models/Project.js";
-import { requireAdmin } from "../../middleware/requireAdmin.js";
 
 const router = express.Router();
 
-// GET /api/projects — list all projects (optional status filter)
+// GET /api/admin/projects — list all projects (optional status filter)
 router.get("/", requireAdmin, async (req, res) => {
   try {
     const { status } = req.query;
-    const filter = {};
+    let filter = {};
     if (status && ["pending", "approved", "rejected"].includes(status)) {
       filter.status = status;
     }
+
     const projects = await Project.find(filter)
       .sort({ createdAt: -1 })
       .populate("submittedBy", "name avatar")
       .lean();
+
     res.json(projects);
   } catch (err) {
     console.error("Error fetching projects:", err);
@@ -23,7 +25,7 @@ router.get("/", requireAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/projects/:id/approve — approve a project
+// PATCH /api/admin/projects/:id/approve
 router.patch("/:id/approve", requireAdmin, async (req, res) => {
   try {
     const updated = await Project.findByIdAndUpdate(
@@ -31,6 +33,7 @@ router.patch("/:id/approve", requireAdmin, async (req, res) => {
       { status: "approved", reviewedBy: req.admin.username, reviewedAt: new Date() },
       { new: true }
     ).populate("submittedBy", "name avatar");
+
     if (!updated) return res.status(404).json({ message: "Project not found." });
     res.json({ message: "Project approved.", project: updated });
   } catch (err) {
@@ -39,7 +42,7 @@ router.patch("/:id/approve", requireAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/projects/:id/reject — reject a project
+// PATCH /api/admin/projects/:id/reject
 router.patch("/:id/reject", requireAdmin, async (req, res) => {
   try {
     const updated = await Project.findByIdAndUpdate(
@@ -47,6 +50,7 @@ router.patch("/:id/reject", requireAdmin, async (req, res) => {
       { status: "rejected", reviewedBy: req.admin.username, reviewedAt: new Date() },
       { new: true }
     ).populate("submittedBy", "name avatar");
+
     if (!updated) return res.status(404).json({ message: "Project not found." });
     res.json({ message: "Project rejected.", project: updated });
   } catch (err) {
@@ -55,7 +59,7 @@ router.patch("/:id/reject", requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/projects/:id — permanently delete a project
+// DELETE /api/admin/projects/:id
 router.delete("/:id", requireAdmin, async (req, res) => {
   try {
     const deleted = await Project.findByIdAndDelete(req.params.id);

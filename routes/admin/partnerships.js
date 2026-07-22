@@ -1,11 +1,11 @@
 import express from "express";
 import { Partnership } from "../../models/Partnership.js";
-import { requireAdmin } from "../../middleware/requireAdmin.js";
+import { requireAdmin } from "./auth.js";
 
 const router = express.Router();
 
-// GET /api/partnerships/admin/list — view all bookings
-router.get("/admin/list", requireAdmin, async (req, res) => {
+// GET /api/admin/partnerships — list all bookings
+router.get("/", requireAdmin, async (req, res) => {
   try {
     const list = await Partnership.find().sort({ submittedAt: -1 });
     res.json(list);
@@ -14,11 +14,10 @@ router.get("/admin/list", requireAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/partnerships/admin/:id/toggle-call — toggle callDone
-router.patch("/admin/:id/toggle-call", requireAdmin, async (req, res) => {
+// PATCH /api/admin/partnerships/:id/toggle-call — toggle callDone status
+router.patch("/:id/toggle-call", requireAdmin, async (req, res) => {
   try {
-    const { id } = req.params;
-    const partnership = await Partnership.findById(id);
+    const partnership = await Partnership.findById(req.params.id);
     if (!partnership) {
       return res.status(404).json({ message: "Booking record not found." });
     }
