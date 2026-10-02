@@ -1,9 +1,14 @@
 import express from "express";
 import { Event } from "../../models/Event.js";
+import mutler from 'multer'
 
 const router = express.Router();
 
-// GET /api/events — list all events
+const storage = multer.memoryStorage()
+const upload = mutler({storage: storage})
+
+
+// GET /apients — list all events
 router.get("/", async (req, res) => {
   try {
     const events = await Event.find().sort({ createdAt: -1 });

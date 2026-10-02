@@ -7,41 +7,43 @@ import User from "../../models/User.js";
 
 const router = express.Router();
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value?.toLowerCase();
-        const name = profile.displayName || profile.username || "Google User";
-        const avatar = profile.photos?.[0]?.value || "";
-        const googleId = profile.id;
+if (process.env.GOOGLE_CLIENT_ID) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0]?.value?.toLowerCase();
+          const name = profile.displayName || profile.username || "Google User";
+          const avatar = profile.photos?.[0]?.value || "";
+          const googleId = profile.id;
 
-        if (!email) {
-          return done(null, false, { message: "No email address linked to this Google account." });
+          if (!email) {
+            return done(null, false, { message: "No email address linked to this Google account." });
+          }
+
+          let user = await User.findByEmail(email);
+
+          if (user) {
+            if (!user.googleId) user.googleId = googleId;
+            if (avatar) user.avatar = avatar;
+            if (user.provider === "local") user.provider = "google";
+            await user.save();
+          } else {
+            user = await User.create({ name, email, avatar, provider: "google", googleId });
+          }
+          return done(null, user);
+        } catch (err) {
+          return done(err);
         }
-
-        let user = await User.findByEmail(email);
-
-        if (user) {
-          if (!user.googleId) user.googleId = googleId;
-          if (avatar) user.avatar = avatar;
-          if (user.provider === "local") user.provider = "google";
-          await user.save();
-        } else {
-          user = await User.create({ name, email, avatar, provider: "google", googleId });
-        }
-        return done(null, user);
-      } catch (err) {
-        return done(err);
       }
-    }
-  )
-);
+    )
+  );
+}
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, max: 10,
