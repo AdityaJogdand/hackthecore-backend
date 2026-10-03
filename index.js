@@ -16,6 +16,7 @@ import adminAuthRoutes from "./routes/admin/auth.js";
 import adminEventRoutes from "./routes/admin/events.js";
 import adminPartnershipRoutes from "./routes/admin/partnerships.js";
 import adminProjectRoutes from "./routes/admin/projects.js";
+import adminUploadRoutes from "./routes/admin/upload.js";
 
 
 const app = express();
@@ -78,6 +79,7 @@ app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/admin/partnerships", adminPartnershipRoutes);
 app.use("/api/admin/projects", adminProjectRoutes);
+app.use("/api/admin/upload", adminUploadRoutes);
 
 /* -------------------------------------------------------------------------- */
 /*                               Health Check                                 */
