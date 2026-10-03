@@ -1,6 +1,7 @@
 import express from "express";
 import { requireAuth } from "../../middleware/requireAuth.js";
 import Project from "../../models/Project.js";
+import { uploadImage, IMAGE_EXT } from "../../lib/s3.js";
 
 const router = express.Router();
 
@@ -14,11 +15,13 @@ function safeUrl(val) {
   const s = safeStr(val, 500);
   return HTTP_URL.test(s) ? s : "";
 }
-function safeThumbnail(val) {
+// http(s) URL → kept as-is; base64 data:image → uploaded to S3, URL returned; anything else → "".
+async function safeThumbnail(val) {
   const s = typeof val === "string" ? val.trim() : "";
-  if (HTTP_URL.test(s)) return s;
-  if (s.startsWith("data:image/")) return s.slice(0, 2_000_000);
-  return "";
+  if (HTTP_URL.test(s)) return s.slice(0, 500);
+  const m = s.match(/^data:(image\/[\w.+-]+);base64,(.+)$/);
+  if (!m || !(m[1] in IMAGE_EXT)) return "";
+  return uploadImage(Buffer.from(m[2], "base64"), m[1], "projects");
 }
 
 // GET /api/projects/approved — public list of approved projects
@@ -61,7 +64,7 @@ router.post("/", requireAuth, async (req, res) => {
       github: safeUrl(github),
       demo: safeUrl(demo),
       team: team.map((t) => safeStr(t, 100)).filter(Boolean),
-      thumbnail: safeThumbnail(thumbnail),
+      thumbnail: await safeThumbnail(thumbnail),
       submittedBy: req.userId,
     });
 
